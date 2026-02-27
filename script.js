@@ -1,28 +1,69 @@
-// Run everything after DOM loads
 document.addEventListener("DOMContentLoaded", function () {
 
-    // Header Visibility
+    // --- 1. SELECTIONS ---
     const header = document.getElementById('mainHeader');
     const homeSection = document.getElementById('home');
+    const footer = document.querySelector('footer');
+    const floatingContact = document.querySelector('.floating-contact');
+    const contactMenu = document.getElementById('contactMenu');
 
-    const observer = new IntersectionObserver((entries) => {
+    // State tracking to prevent observers from fighting
+    let isHomeVisible = true;
+    let isFooterVisible = false;
+
+    // --- 2. VISIBILITY LOGIC (Header & Floating Contact) ---
+    
+    // Function to handle showing/hiding the floating button
+    function updateFloatingButton() {
+        if (isHomeVisible || isFooterVisible) {
+            floatingContact.classList.add('hidden');
+            contactMenu.classList.remove('active'); // Close menu when hiding
+        } else {
+            floatingContact.classList.remove('hidden');
+        }
+    }
+
+    // Observer for the Home Section (Controls Header & Floating Button)
+    const homeObserver = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
+            isHomeVisible = entry.isIntersecting;
+            
+            // Header logic
             if (!entry.isIntersecting) {
                 header.classList.add('visible');
             } else {
                 header.classList.remove('visible');
             }
+            updateFloatingButton();
         });
     }, { threshold: 0.1 });
 
-    observer.observe(homeSection);
+    // Observer for the Footer (Hides button when footer appears)
+    const footerObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            isFooterVisible = entry.isIntersecting;
+            updateFloatingButton();
+        });
+    }, { threshold: 0.1 });
 
-    // Floating Contact Toggle
-    window.toggleContact = function () {
-        document.getElementById('contactMenu').classList.toggle('active');
+    homeObserver.observe(homeSection);
+    footerObserver.observe(footer);
+
+    // --- 3. CONTACT TOGGLE LOGIC ---
+
+    window.toggleContact = function (event) {
+        if (event) event.stopPropagation(); // Prevents immediate closing from the "click outside" logic
+        contactMenu.classList.toggle('active');
     };
 
-    // Typewriter Effect
+    // Click outside to close the menu
+    document.addEventListener('click', (event) => {
+        if (!floatingContact.contains(event.target)) {
+            contactMenu.classList.remove('active');
+        }
+    });
+
+    // --- 4. TYPEWRITER EFFECT ---
     const textArray = [
         "Hey! I’m Rain Jade De Castro, a Computer Science student who enjoys diving deep into the software side of tech.",
         "Outside of coding, I love video gaming, typing, and of course, eating good food.",
@@ -31,7 +72,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
     let textIdx = 0;
     let charIdx = 0;
-
     const typewriterElement = document.getElementById('typewriter');
 
     function type() {
@@ -46,8 +86,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function erase() {
         if (charIdx > 0) {
-            typewriterElement.textContent =
-                textArray[textIdx].substring(0, charIdx - 1);
+            typewriterElement.textContent = textArray[textIdx].substring(0, charIdx - 1);
             charIdx--;
             setTimeout(erase, 30);
         } else {
@@ -56,16 +95,17 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    type();
+    if (typewriterElement) type();
 
-    // Portfolio Slideshow
+    // --- 5. PORTFOLIO SLIDESHOW ---
     let currentSlide = 0;
     const slides = document.querySelectorAll('.slide');
 
-    setInterval(() => {
-        slides[currentSlide].classList.remove('active');
-        currentSlide = (currentSlide + 1) % slides.length;
-        slides[currentSlide].classList.add('active');
-    }, 4000);
-
+    if (slides.length > 0) {
+        setInterval(() => {
+            slides[currentSlide].classList.remove('active');
+            currentSlide = (currentSlide + 1) % slides.length;
+            slides[currentSlide].classList.add('active');
+        }, 4000);
+    }
 });
